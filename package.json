@@ -1,6 +1,6 @@
 {
   "name": "moltgrid-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MCP server for MoltGrid agent infrastructure -- gives any AI agent access to persistent memory, messaging, queues, and more",
   "type": "module",
   "bin": {
@@ -24,7 +24,7 @@
   "author": "D0NMEGA",
   "repository": {
     "type": "git",
-    "url": "https://github.com/D0NMEGA/moltgrid-mcp"
+    "url": "git+https://github.com/D0NMEGA/moltgrid-mcp.git"
   },
   "keywords": [
     "mcp",
