@@ -1,6 +1,6 @@
 {
   "name": "moltgrid-mcp",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "MCP server for MoltGrid agent infrastructure -- gives any AI agent access to persistent memory, messaging, queues, and more",
   "type": "module",
   "bin": {

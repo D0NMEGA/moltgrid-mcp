@@ -42,7 +42,7 @@ function text(data: unknown) {
 // ---------------------------------------------------------------------------
 const server = new McpServer({
   name: "moltgrid",
-  version: "0.1.0",
+  version: "0.2.0",
 });
 
 // ===========================  MEMORY  ======================================
@@ -202,6 +202,34 @@ server.tool(
   },
 );
 
+server.tool(
+  "moltgrid_pubsub_poll",
+  "Poll messages from a subscribed pub/sub channel",
+  {
+    channel: z.string(),
+    limit: z.number().default(20),
+  },
+  async (args) => {
+    const params = new URLSearchParams({
+      channel: args.channel,
+      limit: String(args.limit),
+    });
+    return text(await api("GET", `/v1/pubsub/poll?${params}`));
+  },
+);
+
+server.tool(
+  "moltgrid_pubsub_unsubscribe",
+  "Unsubscribe from a pub/sub channel",
+  {
+    channel: z.string(),
+  },
+  async (args) => {
+    const params = new URLSearchParams({ channel: args.channel });
+    return text(await api("DELETE", `/v1/pubsub/subscribe?${params}`));
+  },
+);
+
 // ===========================  QUEUE  =======================================
 
 server.tool(
@@ -265,6 +293,64 @@ server.tool(
         reason: args.reason,
       }),
     );
+  },
+);
+
+server.tool(
+  "moltgrid_queue_status",
+  "Get the status of a queued job",
+  {
+    job_id: z.string(),
+  },
+  async (args) => {
+    return text(await api("GET", `/v1/queue/${encodeURIComponent(args.job_id)}`));
+  },
+);
+
+server.tool(
+  "moltgrid_queue_replay",
+  "Replay a dead-lettered job",
+  {
+    job_id: z.string(),
+  },
+  async (args) => {
+    return text(
+      await api("POST", `/v1/queue/${encodeURIComponent(args.job_id)}/replay`),
+    );
+  },
+);
+
+server.tool(
+  "moltgrid_queue_dead_letter",
+  "List dead-lettered jobs",
+  {
+    queue_name: z.string().default("default"),
+    limit: z.number().default(20),
+  },
+  async (args) => {
+    const params = new URLSearchParams({
+      queue_name: args.queue_name,
+      limit: String(args.limit),
+    });
+    return text(await api("GET", `/v1/queue/dead_letter?${params}`));
+  },
+);
+
+server.tool(
+  "moltgrid_queue_list",
+  "List jobs in a queue",
+  {
+    queue_name: z.string().default("default"),
+    status: z.string().optional(),
+    limit: z.number().default(20),
+  },
+  async (args) => {
+    const params = new URLSearchParams({
+      queue_name: args.queue_name,
+      limit: String(args.limit),
+    });
+    if (args.status) params.set("status", args.status);
+    return text(await api("GET", `/v1/queue?${params}`));
   },
 );
 
@@ -367,6 +453,48 @@ server.tool(
   },
 );
 
+server.tool(
+  "moltgrid_vector_get",
+  "Get a specific vector memory by key",
+  {
+    key: z.string(),
+    namespace: z.string().default("default"),
+  },
+  async (args) => {
+    const params = new URLSearchParams({ namespace: args.namespace });
+    return text(await api("GET", `/v1/vector/${encodeURIComponent(args.key)}?${params}`));
+  },
+);
+
+server.tool(
+  "moltgrid_vector_delete",
+  "Delete a vector memory by key",
+  {
+    key: z.string(),
+    namespace: z.string().default("default"),
+  },
+  async (args) => {
+    const params = new URLSearchParams({ namespace: args.namespace });
+    return text(await api("DELETE", `/v1/vector/${encodeURIComponent(args.key)}?${params}`));
+  },
+);
+
+server.tool(
+  "moltgrid_vector_list",
+  "List vector memories in a namespace",
+  {
+    namespace: z.string().default("default"),
+    limit: z.number().default(50),
+  },
+  async (args) => {
+    const params = new URLSearchParams({
+      namespace: args.namespace,
+      limit: String(args.limit),
+    });
+    return text(await api("GET", `/v1/vector?${params}`));
+  },
+);
+
 // ===========================  DIRECTORY  ===================================
 
 server.tool(
@@ -414,6 +542,34 @@ server.tool(
   {},
   async () => {
     return text(await api("GET", "/v1/directory/me"));
+  },
+);
+
+server.tool(
+  "moltgrid_directory_match",
+  "Find matching agents for a specific need",
+  {
+    need: z.string(),
+    limit: z.number().default(10),
+  },
+  async (args) => {
+    const params = new URLSearchParams({
+      need: args.need,
+      limit: String(args.limit),
+    });
+    return text(await api("GET", `/v1/directory/match?${params}`));
+  },
+);
+
+server.tool(
+  "moltgrid_leaderboard",
+  "Get the agent leaderboard",
+  {
+    limit: z.number().default(20),
+  },
+  async (args) => {
+    const params = new URLSearchParams({ limit: String(args.limit) });
+    return text(await api("GET", `/v1/directory/leaderboard?${params}`));
   },
 );
 
@@ -605,6 +761,73 @@ server.tool(
     return text(
       await api("GET", `/v1/sessions/${encodeURIComponent(args.session_id)}`),
     );
+  },
+);
+
+server.tool(
+  "moltgrid_session_list",
+  "List all sessions",
+  {
+    limit: z.number().default(20),
+  },
+  async (args) => {
+    const params = new URLSearchParams({ limit: String(args.limit) });
+    return text(await api("GET", `/v1/sessions?${params}`));
+  },
+);
+
+server.tool(
+  "moltgrid_session_delete",
+  "Delete a session by ID",
+  {
+    session_id: z.string(),
+  },
+  async (args) => {
+    return text(
+      await api("DELETE", `/v1/sessions/${encodeURIComponent(args.session_id)}`),
+    );
+  },
+);
+
+server.tool(
+  "moltgrid_session_summarize",
+  "Summarize a session into a condensed form",
+  {
+    session_id: z.string(),
+  },
+  async (args) => {
+    return text(
+      await api("POST", `/v1/sessions/${encodeURIComponent(args.session_id)}/summarize`),
+    );
+  },
+);
+
+// ===========================  EVENTS  ======================================
+
+server.tool(
+  "moltgrid_events",
+  "Get recent agent events",
+  {
+    limit: z.number().default(20),
+    unacked_only: z.boolean().default(false),
+  },
+  async (args) => {
+    const params = new URLSearchParams({
+      limit: String(args.limit),
+      unacked_only: String(args.unacked_only),
+    });
+    return text(await api("GET", `/v1/events?${params}`));
+  },
+);
+
+server.tool(
+  "moltgrid_events_ack",
+  "Acknowledge events by IDs",
+  {
+    event_ids: z.array(z.string()),
+  },
+  async (args) => {
+    return text(await api("POST", "/v1/events/ack", { event_ids: args.event_ids }));
   },
 );
 
