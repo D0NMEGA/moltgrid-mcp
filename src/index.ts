@@ -831,6 +831,186 @@ server.tool(
   },
 );
 
+// ===========================  ORGANIZATIONS  ===============================
+
+server.tool(
+  "moltgrid_org_create",
+  "Create a new organization",
+  {
+    name: z.string(),
+  },
+  async (args) => {
+    return text(await api("POST", "/v1/orgs", { name: args.name }));
+  },
+);
+
+server.tool(
+  "moltgrid_org_list",
+  "List organizations you belong to",
+  {},
+  async () => {
+    return text(await api("GET", "/v1/orgs"));
+  },
+);
+
+server.tool(
+  "moltgrid_org_add_member",
+  "Add a member to an organization",
+  {
+    orgId: z.string(),
+    user_id: z.string(),
+    role: z.string(),
+  },
+  async (args) => {
+    return text(
+      await api("POST", `/v1/orgs/${encodeURIComponent(args.orgId)}/members`, {
+        user_id: args.user_id,
+        role: args.role,
+      }),
+    );
+  },
+);
+
+// ===========================  INTEGRATIONS  ================================
+
+server.tool(
+  "moltgrid_integration_register",
+  "Register an integration for an agent",
+  {
+    agentId: z.string(),
+    platform: z.string(),
+    config: z.string().describe("JSON string of integration configuration"),
+  },
+  async (args) => {
+    return text(
+      await api(
+        "POST",
+        `/v1/agents/${encodeURIComponent(args.agentId)}/integrations`,
+        { platform: args.platform, config: JSON.parse(args.config) },
+      ),
+    );
+  },
+);
+
+server.tool(
+  "moltgrid_integration_list",
+  "List integrations for an agent",
+  {
+    agentId: z.string(),
+  },
+  async (args) => {
+    return text(
+      await api("GET", `/v1/agents/${encodeURIComponent(args.agentId)}/integrations`),
+    );
+  },
+);
+
+// ===========================  TEMPLATES  ===================================
+
+server.tool(
+  "moltgrid_template_list",
+  "List available agent templates",
+  {},
+  async () => {
+    return text(await api("GET", "/v1/templates"));
+  },
+);
+
+// ===========================  MEMORY VISIBILITY  ===========================
+
+server.tool(
+  "moltgrid_memory_set_visibility",
+  "Change visibility of a memory key (private, public, or shared with specific agents)",
+  {
+    key: z.string(),
+    visibility: z.enum(["private", "public", "shared"]),
+    shared_agents: z.array(z.string()).optional(),
+  },
+  async (args) => {
+    const body: Record<string, unknown> = { visibility: args.visibility };
+    if (args.shared_agents !== undefined) body.shared_agents = args.shared_agents;
+    return text(
+      await api("PATCH", `/v1/memory/${encodeURIComponent(args.key)}/visibility`, body),
+    );
+  },
+);
+
+// ===========================  MARKETPLACE REVIEW  ==========================
+
+server.tool(
+  "moltgrid_marketplace_review",
+  "Leave a review and rating for a completed marketplace task",
+  {
+    taskId: z.string(),
+    rating: z.number().min(1).max(5),
+    review: z.string(),
+  },
+  async (args) => {
+    return text(
+      await api(
+        "POST",
+        `/v1/marketplace/tasks/${encodeURIComponent(args.taskId)}/review`,
+        { rating: args.rating, review: args.review },
+      ),
+    );
+  },
+);
+
+// ===========================  ONBOARDING  ==================================
+
+server.tool(
+  "moltgrid_onboarding_start",
+  "Start the agent onboarding flow",
+  {},
+  async () => {
+    return text(await api("POST", "/v1/onboarding/start"));
+  },
+);
+
+server.tool(
+  "moltgrid_onboarding_status",
+  "Check onboarding progress and status",
+  {},
+  async () => {
+    return text(await api("GET", "/v1/onboarding/status"));
+  },
+);
+
+// ===========================  TESTING  =====================================
+
+server.tool(
+  "moltgrid_test_scenario_create",
+  "Create a test scenario for agent testing",
+  {
+    name: z.string().optional(),
+    description: z.string().optional(),
+    steps: z.array(z.string()).optional(),
+  },
+  async (args) => {
+    const body: Record<string, unknown> = {};
+    if (args.name !== undefined) body.name = args.name;
+    if (args.description !== undefined) body.description = args.description;
+    if (args.steps !== undefined) body.steps = args.steps;
+    return text(await api("POST", "/v1/testing/scenarios", body));
+  },
+);
+
+server.tool(
+  "moltgrid_test_scenario_run",
+  "Run a test scenario by ID",
+  {
+    scenarioId: z.string(),
+  },
+  async (args) => {
+    return text(
+      await api(
+        "POST",
+        `/v1/testing/scenarios/${encodeURIComponent(args.scenarioId)}/run`,
+      ),
+    );
+  },
+);
+
 // ---------------------------------------------------------------------------
 // Start
 // ---------------------------------------------------------------------------
